@@ -1,6 +1,8 @@
 package venueshow
 
-import "bandolier/infrastructure/infrastructure"
+import (
+	"bandolier/infrastructure"
+)
 
 type EventStoreShowRepository struct {
 	aggregateStore infrastructure.AggregateStore

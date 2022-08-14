@@ -5,8 +5,8 @@ import (
 	"bandolier/domain/readmodel"
 	"bandolier/domain/venueshow"
 	"bandolier/domain/venueshow/events"
-	"bandolier/infrastructure/infrastructure/inmemory"
-	"bandolier/infrastructure/infrastructure/projections"
+	"bandolier/infrastructure/inmemory"
+	projections2 "bandolier/infrastructure/projections"
 	"testing"
 	"time"
 )
@@ -21,7 +21,7 @@ func TestNewAvailableSlotsProjection(t *testing.T) {
 	showID := venueshow.NewShowID(venueID, startTime)
 
 	p := &AvailableSlotsTests{
-		ProjectionTests: projections.NewProjectionTests(t, func() projections.Projection {
+		ProjectionTests: projections2.NewProjectionTests(t, func() projections2.Projection {
 			return application.NewAvailableSlotsProjection(r)
 		}),
 		repository: r,
@@ -60,7 +60,7 @@ func (s AvailableSlotsTests) ShouldMarkSlotAsUnavailable(t *testing.T) {
 }
 
 type AvailableSlotsTests struct {
-	projections.ProjectionTests
+	projections2.ProjectionTests
 
 	repository readmodel.AvailableSlotsRepository
 	slotID     string

@@ -3,7 +3,7 @@ package application
 import (
 	"bandolier/domain/readmodel"
 	"bandolier/domain/venueshow/events"
-	"bandolier/infrastructure/infrastructure/projections"
+	"bandolier/infrastructure/projections"
 )
 
 type AvailableSlotsProjection struct {

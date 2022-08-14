@@ -2,7 +2,7 @@ package venueshow
 
 import (
 	"bandolier/domain/venueshow/commands"
-	"bandolier/infrastructure/infrastructure"
+	"bandolier/infrastructure"
 )
 
 type CommandHandlers struct {
