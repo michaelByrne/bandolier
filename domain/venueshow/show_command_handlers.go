@@ -53,7 +53,7 @@ func NewHandlers(repo ShowRepository) CommandHandlers {
 			return err
 		}
 
-		err = show.BookSlot(cmd.ID, cmd.ArtistID)
+		err = show.BookSlot(cmd.ID, cmd.ArtistID, cmd.ArtistName, cmd.Headliner)
 		if err != nil {
 			return err
 		}
