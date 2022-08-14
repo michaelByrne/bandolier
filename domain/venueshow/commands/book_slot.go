@@ -3,17 +3,21 @@ package commands
 import "time"
 
 type BookSlot struct {
-	ID       string
-	ArtistID string
-	VenueID  string
-	Start    time.Time
+	ID         string
+	ArtistID   string
+	ArtistName string
+	Headliner  bool
+	VenueID    string
+	Start      time.Time
 }
 
-func NewBookSlot(id string, artistID string, venueID string, start time.Time) BookSlot {
+func NewBookSlot(id, artistID, venueID string, start time.Time, artistName string, headliner bool) BookSlot {
 	return BookSlot{
-		ID:       id,
-		ArtistID: artistID,
-		VenueID:  venueID,
-		Start:    start,
+		ID:         id,
+		ArtistID:   artistID,
+		ArtistName: artistName,
+		Headliner:  headliner,
+		VenueID:    venueID,
+		Start:      start,
 	}
 }

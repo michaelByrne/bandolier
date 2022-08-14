@@ -21,7 +21,7 @@ func TestShowAggregate(t *testing.T) {
 	firstStart := time.Date(2018, time.January, 1, 0, 0, 0, 0, time.UTC)
 	secondStart := time.Date(2018, time.January, 1, 0, 30, 0, 0, time.UTC)
 	showID := venueshow.NewShowID(venueID, firstStart)
-	artist := venueshow.NewArtist("77452a30-5873-4e60-afc3-68a14bf7ea60", "Celebration")
+	artist := venueshow.NewArtist("77452a30-5873-4e60-afc3-68a14bf7ea60", "Celebration", false)
 	oneHundredCents := 100
 
 	a := ShowTests{
@@ -97,12 +97,12 @@ func (s ShowTests) SlotShouldBeScheduled(t *testing.T) {
 	s.When(commands.NewScheduleSlot(s.firstSlotID, s.firstStart, s.oneHour, s.venue.ID))
 	s.Then(func(changes []interface{}, err error) {
 		require.NoError(t, err)
-		assert.Equal(t, events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour), changes[0])
+		assert.Equal(t, events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour), changes[0])
 	})
 }
 
 func (s ShowTests) OverlappingSlotShouldNotBeScheduled(t *testing.T) {
-	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour))
+	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour))
 	s.When(commands.NewScheduleSlot(s.showID.Value, s.secondStart, s.thirtyMinutes, s.venue.ID))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
@@ -111,17 +111,17 @@ func (s ShowTests) OverlappingSlotShouldNotBeScheduled(t *testing.T) {
 }
 
 func (s ShowTests) ShouldBookSlot(t *testing.T) {
-	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour))
-	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart))
+	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour))
+	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart, s.artist.Name, false))
 	s.Then(func(changes []interface{}, err error) {
 		require.NoError(t, err)
-		assert.Equal(t, events.NewSlotBooked(s.firstSlotID, s.showID.Value, s.artist.ID), changes[0])
+		assert.Equal(t, events.NewSlotBooked(s.firstSlotID, s.showID.Value, s.artist.ID, s.artist.Name, false), changes[0])
 	})
 }
 
 func (s ShowTests) ShouldNotBookSlotWithBadID(t *testing.T) {
-	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour))
-	s.When(commands.NewBookSlot("b97db0bf-1341-47eb-8f73-3bfef1188e29", s.artist.ID, s.venue.ID, s.firstStart))
+	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour))
+	s.When(commands.NewBookSlot("b97db0bf-1341-47eb-8f73-3bfef1188e29", s.artist.ID, s.venue.ID, s.firstStart, s.artist.Name, false))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
 		assert.Equal(t, venueshow.SlotDoesNotExistError{}, err)
@@ -131,10 +131,10 @@ func (s ShowTests) ShouldNotBookSlotWithBadID(t *testing.T) {
 func (s ShowTests) ShouldNotDoubleBookSlot(t *testing.T) {
 	s.Given(
 		events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart),
-		events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour),
-		events.NewSlotBooked(s.firstSlotID, s.showID.Value, s.artist.ID),
+		events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour),
+		events.NewSlotBooked(s.firstSlotID, s.showID.Value, s.artist.ID, s.artist.Name, false),
 	)
-	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart))
+	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart, s.artist.Name, false))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
 		assert.Equal(t, venueshow.SlotAlreadyBookedError{}, err)
@@ -143,7 +143,7 @@ func (s ShowTests) ShouldNotDoubleBookSlot(t *testing.T) {
 
 func (s ShowTests) ShouldNotBookSlotWithoutAScheduledShow(t *testing.T) {
 	s.Given()
-	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart))
+	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart, s.artist.Name, false))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
 		assert.Equal(t, venueshow.ShowNotScheduledError{}, err)
@@ -151,7 +151,7 @@ func (s ShowTests) ShouldNotBookSlotWithoutAScheduledShow(t *testing.T) {
 }
 
 func (s ShowTests) ShouldCancel(t *testing.T) {
-	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour))
+	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour))
 	s.When(commands.NewCancel(s.venue.ID, s.firstStart))
 	s.Then(func(changes []interface{}, err error) {
 		require.NoError(t, err)
@@ -166,8 +166,8 @@ func (s ShowTests) ShouldCancel(t *testing.T) {
 func (s ShowTests) ShouldCancelShowWithSlotBookings(t *testing.T) {
 	s.Given(
 		events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart),
-		events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour),
-		events.NewSlotBooked(s.firstSlotID, s.showID.Value, s.artist.ID),
+		events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour),
+		events.NewSlotBooked(s.firstSlotID, s.showID.Value, s.artist.ID, s.artist.Name, false),
 	)
 	s.When(commands.NewCancel(s.venue.ID, s.firstStart))
 	s.Then(func(changes []interface{}, err error) {
@@ -185,7 +185,7 @@ func (s ShowTests) ShouldCancelShowWithSlotBookings(t *testing.T) {
 }
 
 func (s ShowTests) ShouldArchiveShow(t *testing.T) {
-	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour))
+	s.Given(events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart), events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour))
 	s.When(commands.NewArchiveShow(s.venue.ID, s.firstStart, s.oneHundredCents))
 	s.Then(func(changes []interface{}, err error) {
 		require.NoError(t, err)
@@ -196,7 +196,7 @@ func (s ShowTests) ShouldArchiveShow(t *testing.T) {
 func (s ShowTests) ShouldNotArchiveArchivedShow(t *testing.T) {
 	s.Given(
 		events.NewShowScheduled(s.showID.Value, s.venue.ID, s.firstStart),
-		events.NewSlotScheduled(s.firstSlotID, s.firstStart, s.oneHour),
+		events.NewSlotScheduled(s.firstSlotID, s.showID.Value, s.firstStart, s.oneHour),
 		events.NewShowArchived(s.showID.Value, s.oneHundredCents),
 	)
 	s.When(commands.NewArchiveShow(s.venue.ID, s.firstStart, s.oneHundredCents))

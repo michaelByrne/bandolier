@@ -49,7 +49,7 @@ func (s *Show) ScheduleShow(venue Venue, time time.Time, slots []commands.Schedu
 	s.Raise(events.NewShowScheduled(showID.Value, venue.ID, time))
 
 	for _, slot := range slots {
-		s.Raise(events.NewSlotScheduled(uuid.New().String(), slot.StartTime, slot.Duration))
+		s.Raise(events.NewSlotScheduled(uuid.New().String(), showID.Value, slot.StartTime, slot.Duration))
 	}
 	return nil
 }
@@ -67,11 +67,11 @@ func (s *Show) ScheduleSlot(id string, start time.Time, duration time.Duration) 
 		return SlotOverlapsError{}
 	}
 
-	s.Raise(events.NewSlotScheduled(id, start, duration))
+	s.Raise(events.NewSlotScheduled(id, s.Id, start, duration))
 	return nil
 }
 
-func (s *Show) BookSlot(id string, artistID string) error {
+func (s *Show) BookSlot(id, artistID, artistName string, headliner bool) error {
 	err := s.isShowCancelledOrArchived()
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func (s *Show) BookSlot(id string, artistID string) error {
 
 	switch slotStatus {
 	case SlotAvailable:
-		s.Raise(events.NewSlotBooked(id, s.Id, artistID))
+		s.Raise(events.NewSlotBooked(id, s.Id, artistID, artistName, headliner))
 		return nil
 	case SlotBooked:
 		return SlotAlreadyBookedError{}
