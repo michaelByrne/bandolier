@@ -9,7 +9,7 @@ import (
 )
 
 type Show struct {
-	eventsourcing.AggregateBase
+	eventsourcing.AggregateRootBase
 
 	isArchived  bool
 	isCancelled bool
@@ -19,7 +19,7 @@ type Show struct {
 
 func NewShow() *Show {
 	a := &Show{
-		AggregateBase: eventsourcing.NewAggregateRoot(),
+		AggregateRootBase: eventsourcing.NewAggregateRoot(),
 	}
 
 	a.Register(events.ShowScheduled{}, func(e interface{}) { a.ShowScheduled(e.(events.ShowScheduled)) })

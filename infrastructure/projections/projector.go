@@ -1,29 +1,30 @@
 package projections
 
 import (
-	"reflect"
+	"github.com/EventStore/training-introduction-go/infrastructure"
 )
 
 type Subscription interface {
-	Project(t reflect.Type, event interface{})
+	Project(event interface{}, m infrastructure.EventMetadata)
 }
 
 type Projector struct {
 	Subscription
 
-	projection Projection
+	projection infrastructure.EventHandler
 }
 
-func NewProjector(p Projection) *Projector {
+func NewProjector(p infrastructure.EventHandler) *Projector {
 	return &Projector{
 		projection: p,
 	}
 }
 
-func (p Projector) Project(t reflect.Type, event interface{}) {
+func (p Projector) Project(event interface{}, m infrastructure.EventMetadata) {
+	t := infrastructure.GetValueType(event)
 	if !p.projection.CanHandle(t) {
 		return
 	}
 
-	p.projection.Handle(t, event)
+	p.projection.Handle(t, event, m)
 }

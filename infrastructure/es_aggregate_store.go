@@ -1,54 +1,63 @@
 package infrastructure
 
 import (
-	"reflect"
-	"strings"
-
-	"github.com/EventStore/EventStore-Client-Go/esdb"
-	"github.com/EventStore/training-introduction-go/eventsourcing"
+	"bandolier/eventsourcing"
 )
 
 type EsAggregateStore struct {
 	AggregateStore
 
-	store EventStore
+	store             EventStore
+	snapshotThreshold int
 }
 
-func NewEsAggregateStore(store EventStore) *EsAggregateStore {
+func NewEsAggregateStore(store EventStore, snapshotThreshold int) *EsAggregateStore {
 	return &EsAggregateStore{
-		store: store,
+		store:             store,
+		snapshotThreshold: snapshotThreshold,
 	}
 }
 
-func (s *EsAggregateStore) Save(a eventsourcing.AggregateRoot) error {
+func (s *EsAggregateStore) Save(a eventsourcing.AggregateRoot, m CommandMetadata) error {
 	changes := a.GetChanges()
-	err := s.store.AppendEvents(s.getStreamName(a, a.GetId()), a.GetVersion(), changes...)
+	streamName := eventsourcing.GetStreamName(a)
+	err := s.store.AppendEvents(streamName, a.GetVersion(), m, changes...)
 	if err != nil {
 		return err
+	}
+
+	if sa, ok := a.(eventsourcing.AggregateRootSnapshot); ok {
+		newVersion := a.GetVersion() + len(changes)
+		if (newVersion+1)-sa.GetSnapshotVersion() >= s.snapshotThreshold {
+			err = s.store.AppendSnapshot(streamName, newVersion, sa.GetSnapshot())
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	a.ClearChanges()
 	return nil
 }
 
-func (s *EsAggregateStore) Load(aggregateId string, aggregate eventsourcing.AggregateRoot) error {
-	events, err := s.store.LoadEvents(s.getStreamName(aggregate, aggregateId))
-	if err != nil {
-		if esdbError, ok := esdb.FromError(err); !ok {
-			if esdbError.Code() == esdb.ErrorResourceNotFound {
-				return &AggregateNotFoundError{}
-			}
+func (s *EsAggregateStore) Load(aggregateId string, a eventsourcing.AggregateRoot) error {
+	version := -1
+	streamName := eventsourcing.GetStreamNameWithId(a, aggregateId)
+
+	if sa, ok := a.(eventsourcing.AggregateRootSnapshot); ok {
+		sn, md, _ := s.store.LoadSnapshot(streamName)
+		if sn != nil && md != nil {
+			sa.LoadSnapshot(sn, md.Version)
+			version = md.Version + 1
 		}
+	}
+
+	events, err := s.store.LoadEvents(streamName, version)
+	if err != nil {
 		return err
 	}
 
-	aggregate.Load(events)
-	aggregate.ClearChanges()
+	a.Load(events)
+	a.ClearChanges()
 	return nil
-}
-
-func (s *EsAggregateStore) getStreamName(aggregate eventsourcing.AggregateRoot, aggregateId string) string {
-	name := strings.Split(reflect.TypeOf(aggregate).String(), ".")
-	return name[len(name)-1] + "-" + aggregateId
-
 }

@@ -12,7 +12,7 @@ type CommandHandlers struct {
 func NewHandlers(repo ShowRepository) CommandHandlers {
 	commandHandlers := CommandHandlers{infrastructure.NewCommandHandler()}
 
-	commandHandlers.Register(commands.ScheduleShow{}, func(c infrastructure.Command) error {
+	commandHandlers.Register(commands.ScheduleShow{}, func(c infrastructure.Command, metadata infrastructure.CommandMetadata) error {
 		cmd := c.(commands.ScheduleShow)
 
 		id := NewShowID(cmd.VenueID, cmd.Date)
@@ -30,7 +30,7 @@ func NewHandlers(repo ShowRepository) CommandHandlers {
 		return nil
 	})
 
-	commandHandlers.Register(commands.ScheduleSlot{}, func(c infrastructure.Command) error {
+	commandHandlers.Register(commands.ScheduleSlot{}, func(c infrastructure.Command, base infrastructure.CommandMetadata) error {
 		cmd := c.(commands.ScheduleSlot)
 		show, err := repo.Get(NewShowID(cmd.VenueID, cmd.Start))
 		if err != nil {
@@ -46,7 +46,7 @@ func NewHandlers(repo ShowRepository) CommandHandlers {
 		return nil
 	})
 
-	commandHandlers.Register(commands.BookSlot{}, func(c infrastructure.Command) error {
+	commandHandlers.Register(commands.BookSlot{}, func(c infrastructure.Command, metadata infrastructure.CommandMetadata) error {
 		cmd := c.(commands.BookSlot)
 		show, err := repo.Get(NewShowID(cmd.VenueID, cmd.Start))
 		if err != nil {
@@ -62,7 +62,7 @@ func NewHandlers(repo ShowRepository) CommandHandlers {
 		return nil
 	})
 
-	commandHandlers.Register(commands.CancelSlotBooking{}, func(c infrastructure.Command) error {
+	commandHandlers.Register(commands.CancelSlotBooking{}, func(c infrastructure.Command, metadata infrastructure.CommandMetadata) error {
 		cmd := c.(commands.CancelSlotBooking)
 		show, err := repo.Get(NewShowID(cmd.VenueID, cmd.Date))
 		if err != nil {
@@ -78,7 +78,7 @@ func NewHandlers(repo ShowRepository) CommandHandlers {
 		return nil
 	})
 
-	commandHandlers.Register(commands.Cancel{}, func(c infrastructure.Command) error {
+	commandHandlers.Register(commands.Cancel{}, func(c infrastructure.Command, metadata infrastructure.CommandMetadata) error {
 		cmd := c.(commands.Cancel)
 		show, err := repo.Get(NewShowID(cmd.VenueID, cmd.Date))
 		if err != nil {
@@ -94,7 +94,7 @@ func NewHandlers(repo ShowRepository) CommandHandlers {
 		return nil
 	})
 
-	commandHandlers.Register(commands.ArchiveShow{}, func(c infrastructure.Command) error {
+	commandHandlers.Register(commands.ArchiveShow{}, func(c infrastructure.Command, metadata infrastructure.CommandMetadata) error {
 		cmd := c.(commands.ArchiveShow)
 		show, err := repo.Get(NewShowID(cmd.VenueID, cmd.Date))
 		if err != nil {

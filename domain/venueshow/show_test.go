@@ -4,7 +4,7 @@ import (
 	"bandolier/domain/venueshow"
 	"bandolier/domain/venueshow/commands"
 	"bandolier/domain/venueshow/events"
-	infrastructure2 "bandolier/infrastructure"
+	infrastructure "bandolier/infrastructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestShowAggregate(t *testing.T) {
-	store := infrastructure2.NewFakeAggregateStore()
+	store := infrastructure.NewFakeAggregateStore()
 	registry := venueshow.NewEventStoreShowRepository(store)
 	venueID := "8cf31856-dc3e-497a-ade5-3ef6978603af"
 	firstSlotID := "90e23890-85e0-45a7-a6d0-059d7c280534"
@@ -25,7 +25,7 @@ func TestShowAggregate(t *testing.T) {
 	oneHundredCents := 100
 
 	a := ShowTests{
-		AggregateTests:  infrastructure2.NewAggregateTests(store),
+		AggregateTests:  infrastructure.NewAggregateTests(store),
 		venue:           venue,
 		firstStart:      firstStart,
 		secondStart:     secondStart,
@@ -216,7 +216,7 @@ func (s ShowTests) ShouldNotArchiveShowThatDoesNotExist(t *testing.T) {
 }
 
 type ShowTests struct {
-	infrastructure2.AggregateTests
+	infrastructure.AggregateTests
 
 	showID          venueshow.ShowID
 	venue           venueshow.Venue

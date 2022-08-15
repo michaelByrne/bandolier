@@ -15,7 +15,7 @@ func NewEventStoreShowRepository(store infrastructure.AggregateStore) *EventStor
 }
 
 func (r *EventStoreShowRepository) Save(show *Show) {
-	r.aggregateStore.Save(show)
+	r.aggregateStore.Save(show, infrastructure.CommandMetadata{})
 }
 
 func (r *EventStoreShowRepository) Get(id ShowID) (*Show, error) {

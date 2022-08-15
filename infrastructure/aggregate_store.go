@@ -7,7 +7,7 @@ import (
 )
 
 type AggregateStore interface {
-	Save(a eventsourcing.AggregateRoot) error
+	Save(a eventsourcing.AggregateRoot, m CommandMetadata) error
 	Load(id string, a eventsourcing.AggregateRoot) error
 }
 
