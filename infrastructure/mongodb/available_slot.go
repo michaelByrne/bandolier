@@ -1,26 +1,37 @@
 package mongodb
 
 import (
+	"bandolier/domain/readmodel"
 	"time"
-
-	"github.com/EventStore/training-introduction-go/domain/readmodel"
 )
 
 type AvailableSlot struct {
-	Id        string
-	DayId     string
+	ID        string
+	ShowID    string
 	Date      string
 	StartTime string
 	Duration  time.Duration
 	IsBooked  bool
 }
 
-func (a *AvailableSlot) ToAvailableSlot() readmodel.AvailableSlot {
-	return readmodel.AvailableSlot{
-		Id:        a.Id,
-		DayId:     a.DayId,
+func (a *AvailableSlot) ToAvailableSlot() *readmodel.AvailableSlot {
+	return &readmodel.AvailableSlot{
+		SlotID:    a.ID,
+		ShowID:    a.ShowID,
+		Start:     a.StartTime,
 		Date:      a.Date,
-		StartTime: a.StartTime,
 		Duration:  a.Duration,
+		Available: !a.IsBooked,
+	}
+}
+
+func FromAvailableSlot(a readmodel.AvailableSlot) *AvailableSlot {
+	return &AvailableSlot{
+		ID:        a.SlotID,
+		ShowID:    a.ShowID,
+		StartTime: a.Start,
+		Date:      a.Date,
+		Duration:  a.Duration,
+		IsBooked:  !a.Available,
 	}
 }

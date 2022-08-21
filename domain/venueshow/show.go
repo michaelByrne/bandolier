@@ -49,7 +49,11 @@ func (s *Show) ScheduleShow(venue Venue, time time.Time, slots []commands.Schedu
 	s.Raise(events.NewShowScheduled(showID.Value, venue.ID, time))
 
 	for _, slot := range slots {
-		s.Raise(events.NewSlotScheduled(uuid.New().String(), showID.Value, slot.StartTime, slot.Duration))
+		id, err := uuid.NewRandom()
+		if err != nil {
+
+		}
+		s.Raise(events.NewSlotScheduled(id.String(), showID.Value, slot.StartTime, slot.Duration))
 	}
 	return nil
 }
@@ -67,7 +71,11 @@ func (s *Show) ScheduleSlot(id string, start time.Time, duration time.Duration) 
 		return SlotOverlapsError{}
 	}
 
-	s.Raise(events.NewSlotScheduled(id, s.Id, start, duration))
+	slotID, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	s.Raise(events.NewSlotScheduled(slotID.String(), s.Id, start, duration))
 	return nil
 }
 

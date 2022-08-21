@@ -21,13 +21,13 @@ func NewEsAggregateStore(store EventStore, snapshotThreshold int) *EsAggregateSt
 func (s *EsAggregateStore) Save(a eventsourcing.AggregateRoot, m CommandMetadata) error {
 	changes := a.GetChanges()
 	streamName := eventsourcing.GetStreamName(a)
-	err := s.store.AppendEvents(streamName, a.GetVersion(), m, changes...)
+	err := s.store.AppendEvents(streamName, int(a.GetVersion()), m, changes...)
 	if err != nil {
 		return err
 	}
 
 	if sa, ok := a.(eventsourcing.AggregateRootSnapshot); ok {
-		newVersion := a.GetVersion() + len(changes)
+		newVersion := int(a.GetVersion()) + len(changes)
 		if (newVersion+1)-sa.GetSnapshotVersion() >= s.snapshotThreshold {
 			err = s.store.AppendSnapshot(streamName, newVersion, sa.GetSnapshot())
 			if err != nil {

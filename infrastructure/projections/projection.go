@@ -1,10 +1,13 @@
 package projections
 
-import "reflect"
+import (
+	"bandolier/infrastructure"
+	"reflect"
+)
 
 type Projection interface {
 	CanHandle(reflect.Type) bool
-	Handle(reflect.Type, interface{}) error
+	Handle(reflect.Type, interface{}, infrastructure.EventMetadata) error
 	GetHandledTypes() []reflect.Type
 }
 
@@ -33,7 +36,7 @@ func (p *ProjectionBase) CanHandle(t reflect.Type) bool {
 	return exists
 }
 
-func (p *ProjectionBase) Handle(t reflect.Type, event interface{}) error {
+func (p *ProjectionBase) Handle(t reflect.Type, event interface{}, _ infrastructure.EventMetadata) error {
 	for _, h := range p.handlers {
 		if h.Type == t {
 			err := h.Handler(event)

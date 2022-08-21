@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
+	"bandolier/infrastructure"
 	"github.com/EventStore/EventStore-Client-Go/esdb"
-	"github.com/EventStore/training-introduction-go/infrastructure"
 )
 
 type SubscriptionManager struct {

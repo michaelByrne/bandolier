@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EventStore/training-introduction-go/domain/readmodel"
+	"bandolier/domain/readmodel"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,15 +23,16 @@ func NewAvailableSlotsRepository(db *mongo.Database) *AvailableSlotsRepository {
 	}
 }
 
-func (m *AvailableSlotsRepository) AddSlot(s AvailableSlot) error {
-	_, err := m.collection.InsertOne(context.TODO(), s)
+func (m *AvailableSlotsRepository) Add(s readmodel.AvailableSlot) error {
+	mongoSlot := FromAvailableSlot(s)
+	_, err := m.collection.InsertOne(context.TODO(), mongoSlot)
 	return err
 }
 
-func (m *AvailableSlotsRepository) HideSlot(slotId uuid.UUID) error {
+func (m *AvailableSlotsRepository) MarkAsUnavailable(slotId string) error {
 	result, err := m.collection.UpdateOne(
 		context.TODO(),
-		bson.M{"id": slotId.String()},
+		bson.M{"id": slotId},
 		bson.D{{"$set", bson.D{{"isbooked", true}}}})
 
 	if result.ModifiedCount == 0 {
@@ -41,10 +42,10 @@ func (m *AvailableSlotsRepository) HideSlot(slotId uuid.UUID) error {
 	return err
 }
 
-func (m *AvailableSlotsRepository) ShowSlot(slotId uuid.UUID) error {
+func (m *AvailableSlotsRepository) MarkAsAvailable(slotId string) error {
 	result, err := m.collection.UpdateOne(
 		context.TODO(),
-		bson.M{"id": slotId.String()},
+		bson.M{"id": slotId},
 		bson.D{{"$set", bson.D{{"isbooked", false}}}})
 
 	if result.ModifiedCount == 0 {
@@ -66,9 +67,9 @@ func (m *AvailableSlotsRepository) DeleteSlot(slotId uuid.UUID) error {
 	return err
 }
 
-func (m *AvailableSlotsRepository) GetSlotsAvailableOn(date time.Time) ([]readmodel.AvailableSlot, error) {
-	slots := make([]readmodel.AvailableSlot, 0)
-	cur, err := m.collection.Find(context.TODO(), bson.D{{"date", date.Format("02-01-2006")}, {"isbooked", false}})
+func (m *AvailableSlotsRepository) GetSlotsAvailableOn(date time.Time) ([]*readmodel.AvailableSlot, error) {
+	slots := make([]*readmodel.AvailableSlot, 0)
+	cur, err := m.collection.Find(context.TODO(), bson.D{{"date", date.Format("2006-01-02")}, {"isbooked", false}})
 	if err != nil {
 		return nil, err
 	}

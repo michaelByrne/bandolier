@@ -1,21 +1,27 @@
 package readmodel
 
-import "time"
+import (
+	"time"
+)
 
 type AvailableSlot struct {
 	SlotID    string
-	Start     time.Time
+	ShowID    string
+	Date      string
+	Start     string
 	Duration  time.Duration
 	Available bool
 }
 
 type AvailableSlots []*AvailableSlot
 
-func NewAvailableSlot(id string, s time.Time, d time.Duration, available bool) *AvailableSlot {
+func NewAvailableSlot(id string, start string, date string, d time.Duration, available bool, showID string) *AvailableSlot {
 	return &AvailableSlot{
 		SlotID:    id,
-		Start:     s,
+		Start:     start,
+		Date:      date,
 		Duration:  d,
 		Available: available,
+		ShowID:    showID,
 	}
 }

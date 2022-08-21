@@ -9,7 +9,7 @@ type AggregateRoot interface {
 	ClearChanges()
 	GetChanges() []interface{}
 	GetId() string
-	GetVersion() int
+	GetVersion() int64
 }
 
 type AggregateRootBase struct {

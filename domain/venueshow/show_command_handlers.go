@@ -48,7 +48,7 @@ func NewHandlers(repo ShowRepository) CommandHandlers {
 
 	commandHandlers.Register(commands.BookSlot{}, func(c infrastructure.Command, metadata infrastructure.CommandMetadata) error {
 		cmd := c.(commands.BookSlot)
-		show, err := repo.Get(NewShowID(cmd.VenueID, cmd.Start))
+		show, err := repo.Get(ShowID{cmd.ShowID})
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,6 @@
 package inmemory
 
-import "github.com/EventStore/training-introduction-go/eventsourcing"
+import "bandolier/eventsourcing"
 
 type ColdStorage struct {
 	eventsourcing.ColdStorage

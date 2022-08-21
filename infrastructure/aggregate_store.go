@@ -3,12 +3,12 @@ package infrastructure
 import (
 	"fmt"
 
-	"github.com/EventStore/training-introduction-go/eventsourcing"
+	"bandolier/eventsourcing"
 )
 
 type AggregateStore interface {
 	Save(a eventsourcing.AggregateRoot, m CommandMetadata) error
-	Load(id string, a eventsourcing.AggregateRoot) error
+	Load(aggregateId string, a eventsourcing.AggregateRoot) error
 }
 
 type AggregateNotFoundError struct{}

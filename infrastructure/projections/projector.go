@@ -1,7 +1,7 @@
 package projections
 
 import (
-	"github.com/EventStore/training-introduction-go/infrastructure"
+	"bandolier/infrastructure"
 )
 
 type Subscription interface {
