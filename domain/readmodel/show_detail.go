@@ -3,25 +3,25 @@ package readmodel
 import "time"
 
 type Booking struct {
-	SlotID     string
-	ArtistID   string
-	ArtistName string
-	Start      time.Time
-	Duration   time.Duration
+	SlotID     string `json:"slotId"`
+	ArtistID   string `json:"artistId"`
+	ArtistName string `json:"artistName"`
+	Headliner  bool   `json:"headliner"`
 }
 
 type ShowDetail struct {
-	ShowID    string
+	ShowID    string `json:"showId"`
 	Headliner string
-	Date      time.Time
-	Venue     string
+	Date      time.Time `json:"date"`
+	Venue     string    `json:"venue"`
 	Slots     []Slot
 }
 
 type Slot struct {
-	ID       string
-	Start    time.Time
-	Duration time.Duration
+	ID       string        `json:"id"`
+	ShowID   string        `json:"showId"`
+	Start    time.Time     `json:"start"`
+	Duration time.Duration `json:"duration"`
 	Booking  *Booking
 }
 
@@ -35,20 +35,20 @@ func NewShowDetail(showID string, headliner string, date time.Time, venue string
 	}
 }
 
-func NewBooking(id string, artistID string, artistName string, start time.Time, duration time.Duration) *Booking {
+func NewBooking(id string, artistID string, artistName string, headliner bool) *Booking {
 	return &Booking{
 		SlotID:     id,
 		ArtistID:   artistID,
 		ArtistName: artistName,
-		Start:      start,
-		Duration:   duration,
+		Headliner:  headliner,
 	}
 }
 
-func NewSlot(id string, start time.Time, duration time.Duration) *Slot {
+func NewSlot(id string, start time.Time, duration time.Duration, showID string) *Slot {
 	return &Slot{
 		ID:       id,
 		Start:    start,
 		Duration: duration,
+		ShowID:   showID,
 	}
 }

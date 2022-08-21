@@ -1,11 +1,13 @@
 package infrastructure
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type Command interface{}
 
 type CommandHandler interface {
-	GetHandlers() map[reflect.Type]func(command Command) error
+	GetHandlers() map[reflect.Type]func(Command, CommandMetadata) error
 }
 
 type CommandHandle interface {
@@ -15,19 +17,19 @@ type CommandHandle interface {
 type CommandHandlerBase struct {
 	CommandHandler
 
-	handlers map[reflect.Type]func(command Command) error
+	handlers map[reflect.Type]func(Command, CommandMetadata) error
 }
 
 func NewCommandHandler() *CommandHandlerBase {
 	commandHandler := &CommandHandlerBase{}
-	commandHandler.handlers = make(map[reflect.Type]func(Command) error, 0)
+	commandHandler.handlers = make(map[reflect.Type]func(Command, CommandMetadata) error, 0)
 	return commandHandler
 }
 
-func (c *CommandHandlerBase) GetHandlers() map[reflect.Type]func(command Command) error {
+func (c *CommandHandlerBase) GetHandlers() map[reflect.Type]func(Command, CommandMetadata) error {
 	return c.handlers
 }
 
-func (c *CommandHandlerBase) Register(command interface{}, f func(Command) error) {
-	c.handlers[reflect.ValueOf(command).Type()] = f
+func (c *CommandHandlerBase) Register(command interface{}, f func(Command, CommandMetadata) error) {
+	c.handlers[GetValueType(command)] = f
 }

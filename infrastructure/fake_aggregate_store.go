@@ -27,7 +27,7 @@ func (f *FakeAggregateStore) GetStoredChanges() []interface{} {
 	return []interface{}{}
 }
 
-func (f *FakeAggregateStore) Save(a eventsourcing.AggregateRoot) error {
+func (f *FakeAggregateStore) Save(a eventsourcing.AggregateRoot, m CommandMetadata) error {
 	f.aggregate = a
 	return nil
 }

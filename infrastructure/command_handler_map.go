@@ -6,12 +6,12 @@ import (
 )
 
 type CommandHandlerMap struct {
-	handlers map[reflect.Type]func(command Command) error
+	handlers map[reflect.Type]func(Command, CommandMetadata) error
 }
 
 func NewCommandHandlerMap(commandHandlers ...CommandHandler) CommandHandlerMap {
 	c := CommandHandlerMap{}
-	c.handlers = make(map[reflect.Type]func(command Command) error, 0)
+	c.handlers = make(map[reflect.Type]func(Command, CommandMetadata) error, 0)
 
 	for _, ch := range commandHandlers {
 		for k, h := range ch.GetHandlers() {
@@ -22,7 +22,7 @@ func NewCommandHandlerMap(commandHandlers ...CommandHandler) CommandHandlerMap {
 	return c
 }
 
-func (c *CommandHandlerMap) Get(t reflect.Type) (func(command Command) error, error) {
+func (c *CommandHandlerMap) Get(t reflect.Type) (func(Command, CommandMetadata) error, error) {
 	if handler, exists := c.handlers[t]; exists {
 		return handler, nil
 	}

@@ -1,6 +1,7 @@
 package projections
 
 import (
+	"bandolier/infrastructure"
 	"reflect"
 	"testing"
 
@@ -21,7 +22,7 @@ func (p *ProjectionTests) Given(events ...interface{}) {
 	projection := p.projectionFactory()
 
 	for _, e := range events {
-		projection.Handle(reflect.ValueOf(e).Type(), e)
+		projection.Handle(reflect.ValueOf(e).Type(), e, infrastructure.EventMetadata{})
 	}
 }
 

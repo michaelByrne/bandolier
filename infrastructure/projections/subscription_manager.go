@@ -2,43 +2,68 @@ package projections
 
 import (
 	"context"
+	"errors"
 	"reflect"
+	"strings"
 
+	"bandolier/infrastructure"
 	"github.com/EventStore/EventStore-Client-Go/esdb"
-	"github.com/EventStore/training-introduction-go/infrastructure"
 )
 
 type SubscriptionManager struct {
-	esdb          *esdb.Client
-	subscriptions []Subscription
-	streamName    string
-	typesByName   map[string]reflect.Type
-
-	eventFactory *infrastructure.EventFactory
+	esdb            *esdb.Client
+	checkpointStore *infrastructure.EsCheckpointStore
+	serde           *infrastructure.EsEventSerde
+	subscriptions   []Subscription
+	streamName      string
+	typesByName     map[string]reflect.Type
+	isAllStream     bool
 }
 
-func NewSubscriptionManager(esdb *esdb.Client, f *infrastructure.EventFactory, subs ...Subscription) *SubscriptionManager {
+func NewSubscriptionManager(esdb *esdb.Client, c *infrastructure.EsCheckpointStore, s *infrastructure.EsEventSerde,
+	streamName string, subs ...Subscription) *SubscriptionManager {
 	return &SubscriptionManager{
-		esdb:          esdb,
-		subscriptions: subs,
-		eventFactory:  f,
+		esdb:            esdb,
+		subscriptions:   subs,
+		checkpointStore: c,
+		serde:           s,
+		streamName:      streamName,
+		isAllStream:     streamName == "$all",
 	}
 }
 
-func (m SubscriptionManager) Start(ctx context.Context) {
-	stream, err := m.esdb.SubscribeToAll(ctx, esdb.SubscribeToAllOptions{})
+func (m SubscriptionManager) Start(ctx context.Context) error {
+	position, err := m.checkpointStore.GetCheckpoint()
+	if err != nil && !errors.Is(err, &infrastructure.CheckpointNotFoundError{}) {
+		return err
+	}
+
+	var sub *esdb.Subscription
+	if m.isAllStream {
+		sub, err = m.esdb.SubscribeToAll(ctx, m.getAllStreamOptions(position))
+	} else {
+		sub, err = m.esdb.SubscribeToStream(ctx, m.streamName, m.getStreamOptions(position))
+	}
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	go func() {
 		for {
-			s := stream.Recv()
+			s := sub.Recv()
 			if s.EventAppeared != nil {
-				rawEvent := s.EventAppeared.Event
-				ev, t, err := m.eventFactory.Create(rawEvent.EventType, rawEvent.Data)
+				if s.EventAppeared.Event == nil {
+					continue
+				}
+
+				eventType := s.EventAppeared.Event.EventType
+				if strings.HasPrefix(eventType, "$") || strings.Contains(eventType, "async_command_handler") {
+					continue
+				}
+
+				event, metadata, err := m.serde.Deserialize(s.EventAppeared)
 				if err != nil {
-					if ev != nil {
+					if event != nil {
 						panic(err)
 					} else {
 						// ignore unknown event type
@@ -47,8 +72,10 @@ func (m SubscriptionManager) Start(ctx context.Context) {
 				}
 
 				for _, s := range m.subscriptions {
-					s.Project(t, ev)
+					s.Project(event, *metadata)
 				}
+
+				m.storeCheckpoint(s)
 			}
 
 			if s.SubscriptionDropped != nil {
@@ -56,4 +83,42 @@ func (m SubscriptionManager) Start(ctx context.Context) {
 			}
 		}
 	}()
+
+	return nil
+}
+
+func (m SubscriptionManager) getAllStreamOptions(position *uint64) esdb.SubscribeToAllOptions {
+	options := esdb.SubscribeToAllOptions{}
+	if position == nil {
+		options.From = esdb.Start{}
+	} else {
+		options.From = esdb.Position{
+			Commit:  *position,
+			Prepare: *position,
+		}
+	}
+	return options
+}
+
+func (m SubscriptionManager) getStreamOptions(position *uint64) esdb.SubscribeToStreamOptions {
+	options := esdb.SubscribeToStreamOptions{}
+	if position == nil {
+		options.From = esdb.Start{}
+	} else {
+		options.From = esdb.Revision(*position)
+	}
+	return options
+}
+
+func (m SubscriptionManager) storeCheckpoint(s *esdb.SubscriptionEvent) {
+	var checkpoint uint64
+	if m.isAllStream {
+		checkpoint = s.EventAppeared.OriginalEvent().Position.Commit
+	} else {
+		checkpoint = s.EventAppeared.Event.EventNumber
+	}
+	err := m.checkpointStore.StoreCheckpoint(checkpoint)
+	if err != nil {
+		panic(err)
+	}
 }
