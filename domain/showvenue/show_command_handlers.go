@@ -1,7 +1,7 @@
-package venueshow
+package showvenue
 
 import (
-	"bandolier/domain/venueshow/commands"
+	"bandolier/domain/showvenue/commands"
 	"bandolier/infrastructure"
 )
 

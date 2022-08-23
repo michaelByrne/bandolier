@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"bandolier/domain/readmodel"
-	"bandolier/domain/venueshow"
-	"bandolier/domain/venueshow/commands"
+	"bandolier/domain/showvenue"
+	"bandolier/domain/showvenue/commands"
 	"bandolier/infrastructure"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -137,7 +137,7 @@ func (c *BookingController) ShowDetailHandler(ctx echo.Context) error {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}
 
-	showDetail, err := c.showDetailRepository.GetShowDetail(venueshow.NewShowID(venueID, parsedDate).Value)
+	showDetail, err := c.showDetailRepository.GetShowDetail(showvenue.NewShowID(venueID, parsedDate).Value)
 	if err != nil {
 		return ctx.String(http.StatusBadRequest, err.Error())
 	}

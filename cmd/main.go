@@ -3,8 +3,9 @@ package main
 import (
 	"bandolier/application"
 	"bandolier/controllers"
+	"bandolier/domain/showartist"
 	"bandolier/domain/showbank"
-	"bandolier/domain/venueshow"
+	"bandolier/domain/showvenue"
 	"bandolier/eventsourcing"
 	"bandolier/infrastructure"
 	"bandolier/infrastructure/mongodb"
@@ -37,6 +38,7 @@ func main() {
 	serde := infrastructure.NewEsEventSerde(typeMapper)
 	schedulingEventStore := infrastructure.NewEsEventStore(esdbClient, "scheduling", serde)
 	bankEventStore := infrastructure.NewEsEventStore(esdbClient, "bank", serde)
+	artistEventStore := infrastructure.NewEsEventStore(esdbClient, "artist", serde)
 
 	mongoDatabase := mongoClient.Database("projections")
 	availableSlotsRepo := mongodb.NewAvailableSlotsRepository(mongoDatabase)
@@ -44,18 +46,24 @@ func main() {
 	showBankRepo := mongodb.NewBankBalanceRepository(mongoDatabase)
 	schedulingDispatcher := getShowDispatcher(schedulingEventStore)
 	bankDispatcher := getBankDispatcher(bankEventStore)
-	commandStore := infrastructure.NewEsCommandStore(schedulingEventStore, esdbClient, serde, schedulingDispatcher)
+	artistDispatcher := getArtistDispatcher(artistEventStore)
+	bankCommandStore := infrastructure.NewEsCommandStore(schedulingEventStore, esdbClient, serde, bankDispatcher)
 
 	showArchiver := application.NewShowArchiverProcessManager(
-		commandStore,
+		bankCommandStore,
 	)
 
-	err = venueshow.RegisterTypes(typeMapper)
+	err = showvenue.RegisterTypes(typeMapper)
 	if err != nil {
 		panic(err)
 	}
 
 	err = showbank.RegisterTypes(typeMapper)
+	if err != nil {
+		panic(err)
+	}
+
+	err = showartist.RegisterTypes(typeMapper)
 	if err != nil {
 		panic(err)
 	}
@@ -76,15 +84,19 @@ func main() {
 		panic(err)
 	}
 
-	//commandStore := infrastructure.NewEsCommandStore(schedulingEventStore, esdbClient, serde, schedulingDispatcher)
+	//bankCommandStore := infrastructure.NewEsCommandStore(schedulingEventStore, esdbClient, serde, schedulingDispatcher)
 
 	bookingController := controllers.NewBookingController(availableSlotsRepo, showDetailRepo, schedulingDispatcher, schedulingEventStore)
-	bankController := controllers.NewBankController(bankDispatcher, bankEventStore)
+	bankController := controllers.NewBankController(bankDispatcher, bankEventStore, showBankRepo)
+	artistController := controllers.NewArtistController(artistDispatcher, artistEventStore)
+
 	e := echo.New()
+
 	bookingController.Register(e)
 	bankController.Register(e)
+	artistController.Register(e)
 
-	err = commandStore.Start()
+	err = bankCommandStore.Start()
 	if err != nil {
 		panic(err)
 	}
@@ -113,8 +125,8 @@ func createESDBClient() (*esdb.Client, error) {
 
 func getShowDispatcher(eventStore infrastructure.EventStore) *infrastructure.Dispatcher {
 	aggregateStore := infrastructure.NewEsAggregateStore(eventStore, 5)
-	showRepository := venueshow.NewEventStoreShowRepository(aggregateStore)
-	handlers := venueshow.NewHandlers(showRepository)
+	showRepository := showvenue.NewEventStoreShowRepository(aggregateStore)
+	handlers := showvenue.NewHandlers(showRepository)
 	cmdHandlerMap := infrastructure.NewCommandHandlerMap(handlers)
 	dispatcher := infrastructure.NewDispatcher(cmdHandlerMap)
 	return &dispatcher
@@ -122,8 +134,17 @@ func getShowDispatcher(eventStore infrastructure.EventStore) *infrastructure.Dis
 
 func getBankDispatcher(eventStore infrastructure.EventStore) *infrastructure.Dispatcher {
 	aggregateStore := infrastructure.NewEsAggregateStore(eventStore, 5)
-	showRepository := showbank.NewEventStoreBankRepository(aggregateStore)
-	handlers := showbank.NewHandlers(showRepository)
+	bankRepository := showbank.NewEventStoreBankRepository(aggregateStore)
+	handlers := showbank.NewHandlers(bankRepository)
+	cmdHandlerMap := infrastructure.NewCommandHandlerMap(handlers)
+	dispatcher := infrastructure.NewDispatcher(cmdHandlerMap)
+	return &dispatcher
+}
+
+func getArtistDispatcher(eventStore infrastructure.EventStore) *infrastructure.Dispatcher {
+	aggregateStore := infrastructure.NewEsAggregateStore(eventStore, 5)
+	artistRepository := showartist.NewEventStoreArtistRepository(aggregateStore)
+	handlers := showartist.NewHandlers(artistRepository)
 	cmdHandlerMap := infrastructure.NewCommandHandlerMap(handlers)
 	dispatcher := infrastructure.NewDispatcher(cmdHandlerMap)
 	return &dispatcher

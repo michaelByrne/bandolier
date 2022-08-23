@@ -50,6 +50,9 @@ func TestBankBalanceProjection(t *testing.T) {
 	})
 
 	t.Run("ShouldOpenBankWithPresale", p.ShouldOpenBankWithPresale)
+	t.Run("ShouldUpdateBalanceWhenCoversReceived", p.ShouldUpdateBalanceWhenCoversReceived)
+	t.Run("ShouldUpdateBalanceWhenDoorPaid", p.ShouldUpdateBalanceWhenDoorPaid)
+	t.Run("ShouldUpdateBalanceWhenDoorPaidAndCoversReceived", p.ShouldUpdateBalanceWhenDoorPaidAndCoversReceived)
 }
 
 func (b *BankBalanceTests) ShouldOpenBankWithPresale(t *testing.T) {
@@ -58,7 +61,38 @@ func (b *BankBalanceTests) ShouldOpenBankWithPresale(t *testing.T) {
 	balance, err := b.repository.GetBalance(b.showID)
 	require.NoError(t, err)
 
-	b.Then(balance.BalanceInCents, b.tenDollars)
+	b.Then(b.tenDollars, balance.BalanceInCents)
+}
+
+func (b *BankBalanceTests) ShouldUpdateBalanceWhenCoversReceived(t *testing.T) {
+	b.Given(events.NewBankOpened(b.showID, b.tenDollars), events.NewCoversReceived(b.showID, b.fiveDollars, b.twentyDollars))
+
+	balance, err := b.repository.GetBalance(b.showID)
+	require.NoError(t, err)
+
+	b.Then(b.twentyDollars, balance.BalanceInCents)
+}
+
+func (b *BankBalanceTests) ShouldUpdateBalanceWhenDoorPaid(t *testing.T) {
+	b.Given(events.NewBankOpened(b.showID, b.tenDollars), events.NewDoorPaid(b.showID, b.fiveDollars, b.fiveDollars))
+
+	balance, err := b.repository.GetBalance(b.showID)
+	require.NoError(t, err)
+
+	b.Then(b.fiveDollars, balance.BalanceInCents)
+}
+
+func (b *BankBalanceTests) ShouldUpdateBalanceWhenDoorPaidAndCoversReceived(t *testing.T) {
+	b.Given(
+		events.NewBankOpened(b.showID, b.tenDollars),
+		events.NewDoorPaid(b.showID, b.fiveDollars, b.fiveDollars),
+		events.NewCoversReceived(b.showID, b.oneDollar, b.tenDollars),
+	)
+
+	balance, err := b.repository.GetBalance(b.showID)
+	require.NoError(t, err)
+
+	b.Then(b.tenDollars, balance.BalanceInCents)
 }
 
 type BankBalanceTests struct {

@@ -2,7 +2,7 @@ package application
 
 //import (
 //	"bandolier/domain/readmodel"
-//	"bandolier/domain/venueshow/events"
+//	"bandolier/domain/showvenue/events"
 //	"bandolier/infrastructure/inmemory"
 //	"bandolier/infrastructure/projections"
 //	"github.com/stretchr/testify/require"

@@ -1,9 +1,9 @@
-package venueshow_test
+package showvenue_test
 
 import (
-	"bandolier/domain/venueshow"
-	"bandolier/domain/venueshow/commands"
-	"bandolier/domain/venueshow/events"
+	"bandolier/domain/showvenue"
+	"bandolier/domain/showvenue/commands"
+	"bandolier/domain/showvenue/events"
 	infrastructure "bandolier/infrastructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,15 +13,15 @@ import (
 
 func TestShowAggregate(t *testing.T) {
 	store := infrastructure.NewFakeAggregateStore()
-	registry := venueshow.NewEventStoreShowRepository(store)
+	registry := showvenue.NewEventStoreShowRepository(store)
 	venueID := "8cf31856-dc3e-497a-ade5-3ef6978603af"
 	firstSlotID := "90e23890-85e0-45a7-a6d0-059d7c280534"
 	secondSlotID := "44bcd742-4798-4316-b731-586dfa07f8af"
-	venue := venueshow.NewVenue(venueID, "Floristree")
+	venue := showvenue.NewVenue(venueID, "Floristree")
 	firstStart := time.Date(2018, time.January, 1, 0, 0, 0, 0, time.UTC)
 	secondStart := time.Date(2018, time.January, 1, 0, 30, 0, 0, time.UTC)
-	showID := venueshow.NewShowID(venueID, firstStart)
-	artist := venueshow.NewArtist("77452a30-5873-4e60-afc3-68a14bf7ea60", "Celebration", false)
+	showID := showvenue.NewShowID(venueID, firstStart)
+	artist := showvenue.NewArtist("77452a30-5873-4e60-afc3-68a14bf7ea60", "Celebration", false)
 	oneHundredCents := 100
 
 	a := ShowTests{
@@ -38,7 +38,7 @@ func TestShowAggregate(t *testing.T) {
 		oneHundredCents: oneHundredCents,
 	}
 
-	a.RegisterHandlers(venueshow.NewHandlers(registry))
+	a.RegisterHandlers(showvenue.NewHandlers(registry))
 
 	t.Run("ShowShouldBeScheduled", a.ShowShouldBeScheduled)
 	t.Run("ShouldBeScheduledWithManySlots", a.ShouldBeScheduledWithManySlots)
@@ -88,7 +88,7 @@ func (s ShowTests) ShouldNotBeScheduledIfShowCancelled(t *testing.T) {
 	s.When(commands.NewScheduleShow(s.venue.ID, s.venue.Name, s.firstStart, []commands.ScheduledSlot{}))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
-		assert.Equal(t, venueshow.ShowScheduleAlreadyCancelledError{}, err)
+		assert.Equal(t, showvenue.ShowScheduleAlreadyCancelledError{}, err)
 	})
 }
 
@@ -106,7 +106,7 @@ func (s ShowTests) OverlappingSlotShouldNotBeScheduled(t *testing.T) {
 	s.When(commands.NewScheduleSlot(s.showID.Value, s.secondStart, s.thirtyMinutes, s.venue.ID))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
-		assert.Equal(t, venueshow.SlotOverlapsError{}, err)
+		assert.Equal(t, showvenue.SlotOverlapsError{}, err)
 	})
 }
 
@@ -124,7 +124,7 @@ func (s ShowTests) ShouldNotBookSlotWithBadID(t *testing.T) {
 	s.When(commands.NewBookSlot("b97db0bf-1341-47eb-8f73-3bfef1188e29", s.artist.ID, s.venue.ID, s.firstStart, s.artist.Name, false))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
-		assert.Equal(t, venueshow.SlotDoesNotExistError{}, err)
+		assert.Equal(t, showvenue.SlotDoesNotExistError{}, err)
 	})
 }
 
@@ -137,7 +137,7 @@ func (s ShowTests) ShouldNotDoubleBookSlot(t *testing.T) {
 	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart, s.artist.Name, false))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
-		assert.Equal(t, venueshow.SlotAlreadyBookedError{}, err)
+		assert.Equal(t, showvenue.SlotAlreadyBookedError{}, err)
 	})
 }
 
@@ -146,7 +146,7 @@ func (s ShowTests) ShouldNotBookSlotWithoutAScheduledShow(t *testing.T) {
 	s.When(commands.NewBookSlot(s.firstSlotID, s.artist.ID, s.venue.ID, s.firstStart, s.artist.Name, false))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
-		assert.Equal(t, venueshow.ShowNotScheduledError{}, err)
+		assert.Equal(t, showvenue.ShowNotScheduledError{}, err)
 	})
 }
 
@@ -202,7 +202,7 @@ func (s ShowTests) ShouldNotArchiveArchivedShow(t *testing.T) {
 	s.When(commands.NewArchiveShow(s.venue.ID, s.firstStart, s.oneHundredCents))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
-		assert.Equal(t, venueshow.ShowAlreadyArchivedError{}, err)
+		assert.Equal(t, showvenue.ShowAlreadyArchivedError{}, err)
 	})
 }
 
@@ -211,16 +211,16 @@ func (s ShowTests) ShouldNotArchiveShowThatDoesNotExist(t *testing.T) {
 	s.When(commands.NewArchiveShow(s.venue.ID, s.firstStart, s.oneHundredCents))
 	s.Then(func(changes []interface{}, err error) {
 		require.Error(t, err)
-		assert.Equal(t, venueshow.ShowNotScheduledError{}, err)
+		assert.Equal(t, showvenue.ShowNotScheduledError{}, err)
 	})
 }
 
 type ShowTests struct {
 	infrastructure.AggregateTests
 
-	showID          venueshow.ShowID
-	venue           venueshow.Venue
-	artist          venueshow.Artist
+	showID          showvenue.ShowID
+	venue           showvenue.Venue
+	artist          showvenue.Artist
 	firstSlotID     string
 	secondSlotID    string
 	firstStart      time.Time

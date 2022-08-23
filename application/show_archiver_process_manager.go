@@ -2,7 +2,7 @@ package application
 
 import (
 	"bandolier/domain/showbank/commands"
-	"bandolier/domain/venueshow/events"
+	"bandolier/domain/showvenue/events"
 	"bandolier/infrastructure"
 )
 

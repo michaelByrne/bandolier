@@ -1,15 +1,15 @@
-package venueshow
+package showvenue
 
 import (
-	"bandolier/domain/venueshow/commands"
-	"bandolier/domain/venueshow/events"
+	"bandolier/domain/showvenue/commands"
+	"bandolier/domain/showvenue/events"
 	"bandolier/eventsourcing"
 	"bandolier/infrastructure"
 	"reflect"
 	"time"
 )
 
-const prefix = "venueshow"
+const prefix = "showvenue"
 
 func RegisterTypes(tm *eventsourcing.TypeMapper) error {
 	mustParseTime := func(s string) time.Time {
