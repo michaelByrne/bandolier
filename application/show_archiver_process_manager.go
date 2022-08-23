@@ -3,9 +3,7 @@ package application
 import (
 	"bandolier/domain/showbank/commands"
 	"bandolier/domain/venueshow/events"
-	"bandolier/eventsourcing"
 	"bandolier/infrastructure"
-	"time"
 )
 
 type ShowArchiverProcessManager struct {
@@ -13,10 +11,7 @@ type ShowArchiverProcessManager struct {
 }
 
 func NewShowArchiverProcessManager(
-	s eventsourcing.ColdStorage,
 	c infrastructure.CommandStore,
-	es infrastructure.EventStore,
-	archiveThreshold time.Duration,
 ) *ShowArchiverProcessManager {
 	h := infrastructure.NewEventHandler()
 

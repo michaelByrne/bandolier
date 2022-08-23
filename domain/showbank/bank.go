@@ -72,6 +72,7 @@ func (b *Bank) DoorPaid(e events.DoorPaid) {
 }
 
 func (b *Bank) BankOpened(e events.BankOpened) {
+	b.Id = e.ShowID
 	b.balanceInCents = e.PresaleInCents
 	b.isOpened = true
 }

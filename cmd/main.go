@@ -3,6 +3,7 @@ package main
 import (
 	"bandolier/application"
 	"bandolier/controllers"
+	"bandolier/domain/showbank"
 	"bandolier/domain/venueshow"
 	"bandolier/eventsourcing"
 	"bandolier/infrastructure"
@@ -34,12 +35,27 @@ func main() {
 
 	typeMapper := eventsourcing.NewTypeMapper()
 	serde := infrastructure.NewEsEventSerde(typeMapper)
-	eventStore := infrastructure.NewEsEventStore(esdbClient, "scheduling", serde)
+	schedulingEventStore := infrastructure.NewEsEventStore(esdbClient, "scheduling", serde)
+	bankEventStore := infrastructure.NewEsEventStore(esdbClient, "bank", serde)
+
 	mongoDatabase := mongoClient.Database("projections")
 	availableSlotsRepo := mongodb.NewAvailableSlotsRepository(mongoDatabase)
 	showDetailRepo := mongodb.NewShowDetailRepository(mongoDatabase)
+	showBankRepo := mongodb.NewBankBalanceRepository(mongoDatabase)
+	schedulingDispatcher := getShowDispatcher(schedulingEventStore)
+	bankDispatcher := getBankDispatcher(bankEventStore)
+	commandStore := infrastructure.NewEsCommandStore(schedulingEventStore, esdbClient, serde, schedulingDispatcher)
+
+	showArchiver := application.NewShowArchiverProcessManager(
+		commandStore,
+	)
 
 	err = venueshow.RegisterTypes(typeMapper)
+	if err != nil {
+		panic(err)
+	}
+
+	err = showbank.RegisterTypes(typeMapper)
 	if err != nil {
 		panic(err)
 	}
@@ -51,6 +67,8 @@ func main() {
 		"$all",
 		projections.NewProjector(application.NewAvailableSlotsProjection(availableSlotsRepo)),
 		projections.NewProjector(application.NewShowDetailProjection(showDetailRepo)),
+		projections.NewProjector(showArchiver),
+		projections.NewProjector(application.NewBankBalanceProjection(showBankRepo)),
 	)
 
 	err = subManager.Start(context.TODO())
@@ -58,12 +76,18 @@ func main() {
 		panic(err)
 	}
 
-	dispatcher := getDispatcher(eventStore)
-	//commandStore := infrastructure.NewEsCommandStore(eventStore, esdbClient, serde, dispatcher)
+	//commandStore := infrastructure.NewEsCommandStore(schedulingEventStore, esdbClient, serde, schedulingDispatcher)
 
-	bookingController := controllers.NewBookingController(availableSlotsRepo, showDetailRepo, dispatcher, eventStore)
+	bookingController := controllers.NewBookingController(availableSlotsRepo, showDetailRepo, schedulingDispatcher, schedulingEventStore)
+	bankController := controllers.NewBankController(bankDispatcher, bankEventStore)
 	e := echo.New()
 	bookingController.Register(e)
+	bankController.Register(e)
+
+	err = commandStore.Start()
+	if err != nil {
+		panic(err)
+	}
 
 	e.GET("/", hello)
 	e.Logger.Fatal(e.Start(":5001"))
@@ -87,10 +111,19 @@ func createESDBClient() (*esdb.Client, error) {
 	return db, nil
 }
 
-func getDispatcher(eventStore infrastructure.EventStore) *infrastructure.Dispatcher {
+func getShowDispatcher(eventStore infrastructure.EventStore) *infrastructure.Dispatcher {
 	aggregateStore := infrastructure.NewEsAggregateStore(eventStore, 5)
 	showRepository := venueshow.NewEventStoreShowRepository(aggregateStore)
 	handlers := venueshow.NewHandlers(showRepository)
+	cmdHandlerMap := infrastructure.NewCommandHandlerMap(handlers)
+	dispatcher := infrastructure.NewDispatcher(cmdHandlerMap)
+	return &dispatcher
+}
+
+func getBankDispatcher(eventStore infrastructure.EventStore) *infrastructure.Dispatcher {
+	aggregateStore := infrastructure.NewEsAggregateStore(eventStore, 5)
+	showRepository := showbank.NewEventStoreBankRepository(aggregateStore)
+	handlers := showbank.NewHandlers(showRepository)
 	cmdHandlerMap := infrastructure.NewCommandHandlerMap(handlers)
 	dispatcher := infrastructure.NewDispatcher(cmdHandlerMap)
 	return &dispatcher

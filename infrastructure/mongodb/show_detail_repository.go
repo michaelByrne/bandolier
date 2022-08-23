@@ -79,6 +79,10 @@ func (m *ShowDetailRepository) GetShowDetail(showID string) (readmodel.ShowDetai
 
 		if booking != nil {
 			slots[dex].Booking = booking
+
+			if booking.Headliner {
+				show.Headliner = booking.ArtistName
+			}
 		}
 	}
 
