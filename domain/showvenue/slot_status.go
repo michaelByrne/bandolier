@@ -1,4 +1,4 @@
-package venueshow
+package showvenue
 
 type SlotStatus int
 

@@ -1,4 +1,4 @@
-package venueshow
+package showvenue
 
 type Artist struct {
 	Name      string

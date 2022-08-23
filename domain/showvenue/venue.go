@@ -1,4 +1,4 @@
-package venueshow
+package showvenue
 
 type Venue struct {
 	ID   string

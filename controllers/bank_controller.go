@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bandolier/domain/readmodel"
 	"bandolier/domain/showbank/commands"
 	"bandolier/infrastructure"
 	"github.com/labstack/echo/v4"
@@ -10,12 +11,14 @@ import (
 type BankController struct {
 	dispatcher *infrastructure.Dispatcher
 	eventStore infrastructure.EventStore
+	repo       readmodel.BankBalanceRepository
 }
 
-func NewBankController(dispatcher *infrastructure.Dispatcher, es infrastructure.EventStore) *BankController {
+func NewBankController(dispatcher *infrastructure.Dispatcher, es infrastructure.EventStore, repo readmodel.BankBalanceRepository) *BankController {
 	return &BankController{
 		dispatcher: dispatcher,
 		eventStore: es,
+		repo:       repo,
 	}
 }
 
@@ -23,6 +26,7 @@ func (c *BankController) Register(e *echo.Echo) {
 	e.POST("/bank/open", c.OpenHandler)
 	e.POST("/bank/pay-door", c.PayDoorHandler)
 	e.POST("/bank/receive-covers", c.ReceiveCoversHandler)
+	e.GET("/bank/balance/:showID", c.BalanceHandler)
 }
 
 func (c *BankController) OpenHandler(ctx echo.Context) error {
@@ -80,6 +84,15 @@ func (c *BankController) ReceiveCoversHandler(ctx echo.Context) error {
 	}
 
 	return nil
+}
+
+func (c *BankController) BalanceHandler(ctx echo.Context) error {
+	balance, err := c.repo.GetBalance(ctx.Param("showID"))
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	return ctx.JSON(http.StatusOK, balance)
 }
 
 type OpenBankRequest struct {

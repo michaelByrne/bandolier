@@ -1,8 +1,8 @@
-package venueshow
+package showvenue
 
 import (
-	"bandolier/domain/venueshow/commands"
-	"bandolier/domain/venueshow/events"
+	"bandolier/domain/showvenue/commands"
+	"bandolier/domain/showvenue/events"
 	"bandolier/eventsourcing"
 	"github.com/google/uuid"
 	"time"

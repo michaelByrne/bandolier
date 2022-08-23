@@ -4,8 +4,8 @@ package application_test
 //import (
 //	"bandolier/application"
 //	"bandolier/domain/readmodel"
-//	"bandolier/domain/venueshow"
-//	"bandolier/domain/venueshow/events"
+//	"bandolier/domain/showvenue"
+//	"bandolier/domain/showvenue/events"
 //	"bandolier/infrastructure/inmemory"
 //	projections "bandolier/infrastructure/projections"
 //	"testing"
@@ -20,7 +20,7 @@ package application_test
 //	artistName := "Gwar"
 //	startTime := time.Date(2017, time.January, 1, 0, 0, 0, 0, time.UTC)
 //	duration := time.Minute * 45
-//	showID := venueshow.NewShowID(venueID, startTime)
+//	showID := showvenue.NewShowID(venueID, startTime)
 //
 //	p := &AvailableSlotsTests{
 //		ProjectionTests: projections.NewProjectionTests(t, func() projections.Projection {
@@ -44,7 +44,7 @@ package application_test
 //
 //func (s AvailableSlotsTests) ShouldAddSlot(t *testing.T) {
 //	s.Given(
-//		events.NewShowScheduled(venueshow.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
+//		events.NewShowScheduled(showvenue.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
 //		events.NewSlotScheduled(s.slotID, s.showID.Value, s.startTime, s.duration),
 //	)
 //	s.Then(
@@ -54,7 +54,7 @@ package application_test
 //
 //func (s AvailableSlotsTests) ShouldMarkSlotAsUnavailable(t *testing.T) {
 //	s.Given(
-//		events.NewShowScheduled(venueshow.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
+//		events.NewShowScheduled(showvenue.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
 //		events.NewSlotScheduled(s.slotID, s.showID.Value, s.startTime, s.duration),
 //		events.NewSlotBooked(s.slotID, s.showID.Value, s.artistID, s.artistName, false),
 //	)
@@ -65,7 +65,7 @@ package application_test
 //
 //func (s AvailableSlotsTests) ShouldMarkSlotAsAvailableIfBookingCancelled(t *testing.T) {
 //	s.Given(
-//		events.NewShowScheduled(venueshow.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
+//		events.NewShowScheduled(showvenue.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
 //		events.NewSlotScheduled(s.slotID, s.showID.Value, s.startTime, s.duration),
 //		events.NewSlotBooked(s.slotID, s.showID.Value, s.artistID, s.artistName, false),
 //		events.NewSlotBookingCancelled(s.slotID),
@@ -77,7 +77,7 @@ package application_test
 //
 //func (s AvailableSlotsTests) ShouldMarkSlotAsUnavailableIfSlotRebookedAfterCancellation(t *testing.T) {
 //	s.Given(
-//		events.NewShowScheduled(venueshow.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
+//		events.NewShowScheduled(showvenue.NewShowID(s.venueID, s.startTime).Value, s.venueID, s.startTime),
 //		events.NewSlotScheduled(s.slotID, s.showID.Value, s.startTime, s.duration),
 //		events.NewSlotBooked(s.slotID, s.showID.Value, s.artistID, s.artistName, false),
 //		events.NewSlotBookingCancelled(s.slotID),
@@ -96,7 +96,7 @@ package application_test
 //	venueID    string
 //	artistID   string
 //	artistName string
-//	showID     venueshow.ShowID
+//	showID     showvenue.ShowID
 //	startTime  time.Time
 //	duration   time.Duration
 //}

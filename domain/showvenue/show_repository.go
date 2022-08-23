@@ -1,4 +1,4 @@
-package venueshow
+package showvenue
 
 type ShowRepository interface {
 	Save(show *Show)
