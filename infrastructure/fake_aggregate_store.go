@@ -32,8 +32,8 @@ func (f *FakeAggregateStore) Save(a eventsourcing.AggregateRoot, m CommandMetada
 	return nil
 }
 
-func (f *FakeAggregateStore) Load(aggregateId string, aggregate eventsourcing.AggregateRoot) error {
-	aggregate.Load(f.initialEvents)
-	aggregate.ClearChanges()
+func (f *FakeAggregateStore) Load(aggregateId string, a eventsourcing.AggregateRoot) error {
+	a.Load(f.initialEvents)
+	a.ClearChanges()
 	return nil
 }

@@ -56,7 +56,7 @@ func RegisterTypes(tm *eventsourcing.TypeMapper) error {
 	err = tm.MapEvent(reflect.TypeOf(events.ShowArchived{}), prefix+"-show-archived", func(data map[string]interface{}) interface{} {
 		return events.ShowArchived{
 			ShowID:            data["id"].(string),
-			DoorAmountInCents: data["door_amount_in_cents"].(int),
+			DoorAmountInCents: int(data["door_amount_in_cents"].(float64)),
 		}
 	}, func(t interface{}) map[string]interface{} {
 		event := t.(events.ShowArchived)

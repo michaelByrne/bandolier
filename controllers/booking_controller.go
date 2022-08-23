@@ -33,6 +33,7 @@ func (c *BookingController) Register(e *echo.Echo) {
 	e.POST("/slots/schedule", c.ScheduleSlotHandler)
 	e.POST("/shows/schedule", c.ScheduleShowHandler)
 	e.POST("/slots/book", c.BookSlotHandler)
+	e.POST("/shows/archive", c.ArchiveShowHandler)
 }
 
 func (c *BookingController) AvailableHandler(ctx echo.Context) error {
@@ -144,6 +145,27 @@ func (c *BookingController) ShowDetailHandler(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, showDetail)
 }
 
+func (c *BookingController) ArchiveShowHandler(ctx echo.Context) error {
+	archiveShowRequest := &ArchiveShowRequest{}
+	err := ctx.Bind(archiveShowRequest)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	date, err := time.Parse("2006-01-02", archiveShowRequest.Date)
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	command := commands.NewArchiveShow(archiveShowRequest.VenueID, date, archiveShowRequest.AmountInCents)
+	err = c.dispatcher.Dispatch(command, infrastructure.CommandMetadata{})
+	if err != nil {
+		return ctx.String(http.StatusBadRequest, err.Error())
+	}
+
+	return nil
+}
+
 type ScheduleShowRequest struct {
 	Date      string `json:"date"`
 	VenueID   string `json:"venueId"`
@@ -164,4 +186,10 @@ type BookSlotRequest struct {
 	VenueID    string `json:"venueId"`
 	Headliner  bool   `json:"headliner"`
 	Start      string `json:"start"`
+}
+
+type ArchiveShowRequest struct {
+	VenueID       string `json:"venueId"`
+	Date          string `json:"date"`
+	AmountInCents int    `json:"amountInCents"`
 }
