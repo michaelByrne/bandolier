@@ -42,6 +42,15 @@ func NewBankBalanceProjection(r *mongodb.BankBalanceRepository) *BankBalanceProj
 
 		return nil
 	})
+	p.When(events.ArtistPaid{}, func(e interface{}) error {
+		b := e.(events.ArtistPaid)
+		err := r.UpdateBalance(b.ShowID, b.NewBalance)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	return &BankBalanceProjection{p, r}
 }

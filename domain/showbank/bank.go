@@ -23,6 +23,7 @@ func NewBank() *Bank {
 	a.Register(events.DoorPaid{}, func(e interface{}) { a.DoorPaid(e.(events.DoorPaid)) })
 	a.Register(events.BankOpened{}, func(e interface{}) { a.BankOpened(e.(events.BankOpened)) })
 	a.Register(events.CoversReceived{}, func(e interface{}) { a.CoversReceived(e.(events.CoversReceived)) })
+	a.Register(events.ArtistPaid{}, func(e interface{}) { a.ArtistPaid(e.(events.ArtistPaid)) })
 
 	return a
 }
@@ -64,6 +65,16 @@ func (b *Bank) ReceiveCovers(amount int, showID string) error {
 	return nil
 }
 
+func (b *Bank) PayArtist(amount int, showID, artistID string) error {
+	if !b.isOpened {
+		return BankNotOpenedError{}
+	}
+
+	newBalance := b.balanceInCents - amount
+	b.Raise(events.NewArtistPaid(amount, newBalance, showID, artistID))
+	return nil
+}
+
 // EVENTS
 
 func (b *Bank) DoorPaid(e events.DoorPaid) {
@@ -79,6 +90,10 @@ func (b *Bank) BankOpened(e events.BankOpened) {
 
 func (b *Bank) CoversReceived(e events.CoversReceived) {
 	b.coversReceived = true
+	b.balanceInCents = e.NewBalance
+}
+
+func (b *Bank) ArtistPaid(e events.ArtistPaid) {
 	b.balanceInCents = e.NewBalance
 }
 

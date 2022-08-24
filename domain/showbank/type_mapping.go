@@ -90,6 +90,24 @@ func RegisterTypes(tm *eventsourcing.TypeMapper) error {
 		return err
 	}
 
+	err = tm.MapEvent(reflect.TypeOf(events.ArtistPaid{}), prefix+"-artist-paid", func(data map[string]interface{}) interface{} {
+		return events.ArtistPaid{
+			ShowID:        data["show_id"].(string),
+			AmountInCents: int(data["amount_in_cents"].(float64)),
+			NewBalance:    int(data["new_balance"].(float64)),
+		}
+	}, func(t interface{}) map[string]interface{} {
+		event := t.(events.ArtistPaid)
+		return map[string]interface{}{
+			"show_id":         event.ShowID,
+			"amount_in_cents": event.AmountInCents,
+			"new_balance":     event.NewBalance,
+		}
+	})
+	if err != nil {
+		return err
+	}
+
 	registerType := func(t interface{}, typeName string) {
 		tm.RegisterType(infrastructure.GetValueType(t), typeName, func() interface{} {
 			return t
@@ -99,6 +117,7 @@ func RegisterTypes(tm *eventsourcing.TypeMapper) error {
 	registerType(commands.OpenBank{}, prefix+"-open-bank")
 	registerType(commands.ReceiveCovers{}, prefix+"-receive-covers")
 	registerType(commands.PayDoor{}, prefix+"-pay-door")
+	registerType(commands.PayArtist{}, prefix+"-pay-artist")
 
 	return nil
 }
