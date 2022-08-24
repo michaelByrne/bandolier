@@ -30,5 +30,22 @@ func NewHandlers(repo ArtistRepository) CommandHandlers {
 		return nil
 	})
 
+	commandHandlers.Register(commands.PayArtist{}, func(c infrastructure.Command, metadata infrastructure.CommandMetadata) error {
+		cmd := c.(commands.PayArtist)
+
+		artist, err := repo.Get(cmd.ArtistID)
+		if err != nil {
+			return err
+		}
+
+		err = artist.PayArtist(cmd.ArtistID, cmd.ShowID, cmd.AmountInCents)
+		if err != nil {
+			return err
+		}
+
+		repo.Save(artist)
+		return nil
+	})
+
 	return commandHandlers
 }

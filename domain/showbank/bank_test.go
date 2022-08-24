@@ -14,6 +14,7 @@ func TestNewBank(t *testing.T) {
 	store := infrastructure.NewFakeAggregateStore()
 	repo := showbank.NewEventStoreBankRepository(store)
 	showID := "05b2f393-7d9e-48e8-be24-48e8d2fc114e"
+	artistID := "1c2afcd6-0989-4151-8576-6aaf2614f6d4"
 	oneDollar := 100
 	twoDollars := 200
 	fiveDollars := 500
@@ -28,6 +29,7 @@ func TestNewBank(t *testing.T) {
 		fiveDollars:    fiveDollars,
 		tenDollars:     tenDollars,
 		zeroDollars:    zeroDollars,
+		artistID:       artistID,
 	}
 
 	a.RegisterHandlers(showbank.NewHandlers(repo))
@@ -38,6 +40,8 @@ func TestNewBank(t *testing.T) {
 	t.Run("ShouldNotPayDoorIfBankNotOpened", a.ShouldNotPayDoorIfBankNotOpened)
 	t.Run("ShouldReceiveCovers", a.ShouldReceiveCovers)
 	t.Run("ShouldReceiveCoversAndPayDoor", a.ShouldReceiveCoversAndPayDoor)
+	t.Run("ShouldPayArtist", a.ShouldPayArtist)
+	t.Run("ShouldPayArtistAndPayDoor", a.ShouldPayArtistAndPayDoor)
 }
 
 func (b BankTests) ShouldOpenBankWithPresale(t *testing.T) {
@@ -94,10 +98,29 @@ func (b BankTests) ShouldReceiveCoversAndPayDoor(t *testing.T) {
 	})
 }
 
+func (b BankTests) ShouldPayArtist(t *testing.T) {
+	b.Given(events.NewBankOpened(b.showID, b.oneDollar))
+	b.When(commands.NewPayArtist(b.oneDollar, b.showID, b.artistID))
+	b.Then(func(changes []interface{}, err error) {
+		require.NoError(t, err)
+		assert.Equal(t, events.NewArtistPaid(b.oneDollar, b.zeroDollars, b.showID, b.artistID), changes[0])
+	})
+}
+
+func (b BankTests) ShouldPayArtistAndPayDoor(t *testing.T) {
+	b.Given(events.NewBankOpened(b.showID, b.twoDollars), events.NewArtistPaid(b.oneDollar, b.oneDollar, b.showID, b.artistID))
+	b.When(commands.NewPayDoor(b.showID, b.oneDollar))
+	b.Then(func(changes []interface{}, err error) {
+		require.NoError(t, err)
+		assert.Equal(t, events.NewDoorPaid(b.showID, b.oneDollar, b.zeroDollars), changes[0])
+	})
+}
+
 type BankTests struct {
 	infrastructure.AggregateTests
 
 	showID      string
+	artistID    string
 	oneDollar   int
 	twoDollars  int
 	fiveDollars int

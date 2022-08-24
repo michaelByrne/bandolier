@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/EventStore/EventStore-Client-Go v1.0.3-0.20220302114348-d5a274683572
-	github.com/EventStore/training-introduction-go v0.0.0-20220420175910-b14292cd99fb
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/google/uuid v1.1.2
+	github.com/iancoleman/strcase v0.2.0
 	github.com/labstack/echo/v4 v4.8.0
 	github.com/stretchr/testify v1.7.0
 	go.mongodb.org/mongo-driver v1.10.1

@@ -53,6 +53,10 @@ func main() {
 		bankCommandStore,
 	)
 
+	artistPayer := application.NewPayArtistProcessManager(
+		bankCommandStore,
+	)
+
 	err = showvenue.RegisterTypes(typeMapper)
 	if err != nil {
 		panic(err)
@@ -77,6 +81,7 @@ func main() {
 		projections.NewProjector(application.NewShowDetailProjection(showDetailRepo)),
 		projections.NewProjector(showArchiver),
 		projections.NewProjector(application.NewBankBalanceProjection(showBankRepo)),
+		projections.NewProjector(artistPayer),
 	)
 
 	err = subManager.Start(context.TODO())

@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"github.com/EventStore/training-introduction-go/eventsourcing"
+	"bandolier/eventsourcing"
 )
 
 type FakeAggregateStore struct {
